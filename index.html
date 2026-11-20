@@ -288,7 +288,7 @@ $('bkmk').addEventListener('click',function(){$('bk').value=JSON.stringify({v:1,
 $('bkcp').addEventListener('click',function(){var t=$('bk');t.select();var ok=false;try{ok=document.execCommand('copy')}catch(e){}$('bkmsg').textContent=ok?'已复制。':'没能自动复制，请手动全选复制。'});
 $('bkrs').addEventListener('click',function(){var o;try{o=JSON.parse($('bk').value)}catch(e){}if(!o||!o.D||!Array.isArray(o.T)){$('bkmsg').textContent='备份文字不对，没有恢复。';return}
 ask('<b>确认恢复？</b><br>这会覆盖这个浏览器里现有的全部数据。',function(a){if(!a)return;ask('<b>再确认一次</b><br>覆盖后无法撤销。真的要恢复吗？',function(b){if(!b)return;D=Object.assign({},D,o.D);T=o.T;save();
-ids.forEach(function(k){$(k).value=(k==='raise'?D[k]:fm(D[k]))||''});$('sd').value=D.sd;$('wst').value=D.wst;$('wh').value=D.wh;$('wr').value=D.wr;$('wd').value=D.wd;$('ws').value=D.ws;$('cd').value=D.cd;$('cs').value=D.cs;locked=D.salary>0;render();$('bkmsg').textContent='已恢复。'})})})});
+ids.forEach(function(k){$(k).value=(k==='raise'?D[k]:fm(D[k]))||''});$('sd').value=D.sd;$('wst').value=D.wst;$('wh').value=D.wh;$('wr').value=D.wr;$('wd').value=D.wd;$('ws').value=D.ws;$('cd').value=D.cd;$('cs').value=D.cs;locked=D.salary>0;render();$('bkmsg').textContent='已恢复。'})})});
 locked=D.salary>0;
 $('lockbar').addEventListener('click',function(e){if(e.target.id==='unl')confirm3();if(e.target.id==='lk'){locked=true;applyLock()}});
 ids.forEach(function(k){$(k).value=(k==='raise'?D[k]:fm(D[k]))||'';$(k).addEventListener('input',function(){D[k]=k==='raise'?(parseFloat($(k).value)||0):pn($(k).value);save();render()})});
