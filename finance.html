@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>财务管理 Rp</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--tx:#1b1f24;--mut:#6b7280;--bd:#e3e6ea;--ac:#0f9d6b;--wn:#d94f4f;--in:#eef1f4;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14171b;--card:#1d2127;--tx:#e8eaed;--mut:#9aa1ab;--bd:#2c323a;--ac:#3ec99a;--wn:#ef7b7b;--in:#272c33;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#14171b;--card:#1d2127;--tx:#e8eaed;--mut:#9aa1ab;--bd:#2c323a;--ac:#3ec99a;--wn:#ef7b7b;--in:#272c33;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+main{max-width:860px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:4px 0 14px}h2{font-size:15px;margin:0 0 10px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.stat{background:var(--in);border-radius:10px;padding:10px}
+.stat small{color:var(--mut);display:block}.stat b{font-size:17px}
+label{display:block;font-size:12px;color:var(--mut);margin-bottom:2px}
+input,select{width:100%;padding:8px;border:1px solid var(--bd);border-radius:8px;background:var(--in);color:var(--tx);font:inherit}
+button{padding:8px 14px;border:0;border-radius:8px;background:var(--ac);color:#fff;font:inherit;cursor:pointer}
+button.g{background:var(--in);color:var(--mut);padding:4px 10px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:end}.row>div{flex:1;min-width:110px}
+.sc{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:6px 8px;border-bottom:1px solid var(--bd);text-align:right;white-space:nowrap}th:first-child,td:first-child{text-align:left}
+.bar{height:10px;background:var(--in);border-radius:6px;overflow:hidden;margin:6px 0}.bar i{display:block;height:100%;background:var(--ac)}
+.bad{color:var(--wn)}.ok{color:var(--ac)}.mut{color:var(--mut);font-size:12px}
+svg{width:100%;height:auto;display:block}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center;font-size:13px;max-width:320px}.cal span{padding:4px 0;border-radius:6px}.cal .h{color:var(--mut);font-size:12px}.cal .t{background:var(--ac);color:#fff}
+</style>
+</head>
+<body>
+<main>
+<h1>💰 我的财务管理（印尼盾 Rp）</h1>
+<div class="card"><div id="clock"></div><div id="cal"></div></div>
+
+<div class="card">
+<h2>① 基本设置</h2>
+<div id="lockbar" style="margin-bottom:10px"></div>
+<div class="row">
+<div><label>月薪 (Rp)</label><input id="salary" class="money" type="text" inputmode="numeric"></div>
+<div><label>娱乐预算 / 月 (Rp)</label><input id="ent" class="money" type="text" inputmode="numeric"></div>
+<div><label>其他固定支出合计 (Rp，自动)</label><input id="other" type="text" readonly></div>
+</div>
+<div class="row" style="margin-top:8px">
+<div><label>起算日的存款 (Rp)</label><input id="start" class="money" type="text" inputmode="numeric"></div>
+<div><label>每年加薪 (%)</label><input id="raise" type="number" step="1"></div>
+<div><label>存款目标 (Rp)</label><input id="goal" class="money" type="text" inputmode="numeric"></div>
+<div><label>起算日期（上面存款对应的日期）</label><input id="sd" type="date"></div>
+</div>
+<div class="row" style="margin-top:8px">
+<div><label>上班时间</label><input id="wst" type="time"></div>
+<div><label>每天工作 (小时)</label><input id="wh" type="number" step="0.5"></div>
+<div><label>休息 (小时，不计薪)</label><input id="wr" type="number" step="0.5"></div>
+<div><label>每周上班</label><select id="wd"><option value="5">周一至周五</option><option value="6">周一至周六</option><option value="7">每天</option></select></div>
+<div><label>入职日期（首月按天数折算）</label><input id="ws" type="date"></div>
+<div><label>公司每月按几天算</label><input id="cd" type="number"></div>
+<div><label>工资周期从几号开始</label><input id="cs" type="number" min="1" max="28"></div>
+</div>
+<p class="mut">公司包吃住、水电网，所以固定支出默认为 0。以上数据会保存在这个浏览器里。</p>
+</div>
+
+<div class="card">
+<h2>①-b 固定支出清单（每月）</h2>
+<div class="row">
+<div><label>名称（如 话费、交通、给家里、保险）</label><input id="fn" type="text"></div>
+<div><label>每月预算 (Rp)</label><input id="fa" class="money" type="text" inputmode="numeric"></div>
+<div style="flex:0"><button id="fadd">添加</button></div>
+</div>
+<div class="sc" style="margin-top:8px"><table id="ftab"></table></div>
+<p class="mut">这里的每一项都会从每月可存里扣掉，并出现在下面的记账类别里，有各自的进度条。</p>
+</div>
+
+<div class="card">
+<h2>①-d 娱乐里的固定支出（订阅、会员）</h2>
+<div class="row"><div><label>名称（如 YouTube 会员）</label><input id="sn" type="text"></div><div><label>每月金额 (Rp)</label><input id="sa" class="money" type="text" inputmode="numeric"></div><div style="flex:0"><button id="sadd">添加</button></div></div>
+<div class="sc" style="margin-top:8px"><table id="stab"></table></div>
+<p class="mut" id="sinfo"></p>
+<p class="mut">这些已经包含在上面的娱乐预算里，不会额外多扣钱。</p>
+</div>
+
+<div class="card">
+<h2>①-c 特殊月份（新入职、休假回来）</h2>
+<div class="row"><div><label>月份</label><input id="am" type="month"></div><div><label>当月上班天数</label><input id="ad" type="number"></div><div style="flex:0"><button id="aadd">添加</button></div></div>
+<div class="sc" style="margin-top:8px"><table id="atab"></table></div>
+<p class="mut">这个月工资 = 月薪 × 上班天数 ÷ 公司每月天数（最多 1 倍），月底发放。月份按周期结束的月份算（周期是 22 号到下月 21 号，所以 11 月 = 10/22—11/21）。只在新入职或休假回来的周期填。</p>
+</div>
+
+<div class="card">
+<h2>② 储蓄预测</h2>
+<div id="goalbox"></div>
+<div class="grid" id="sum"></div>
+<div id="chart" style="margin-top:12px"></div>
+<div id="live" class="grid" style="margin-top:12px"></div><table id="proj" style="display:none"></table>
+</div>
+
+<div class="card">
+<h2>②-b 每月实际到账（可以随时修改，不用解锁）</h2>
+<p class="mut">加班或扣款，实际到账和系统预计不一样时，直接在“实际到账”里填。填了以后，当前存款和历年记录都会按你填的算；清空就恢复成系统预计。“存入” = 实际到账 − 娱乐预算 − 其他固定支出。</p>
+<div class="sc"><table id="acttab"></table></div>
+</div>
+
+<div class="card">
+<h2>③ 本月记账</h2>
+<div id="mstat"></div><div id="cbars"></div>
+<div class="row" style="margin-top:8px">
+<div><label>类别</label><select id="cat"><option>娱乐</option><option>交通</option><option>购物</option><option>其他</option></select></div>
+<div><label>金额 (Rp)</label><input id="amt" class="money" type="text" inputmode="numeric"></div>
+<div><label>备注</label><input id="note" type="text"></div>
+<div style="flex:0"><button id="add">添加</button></div>
+</div>
+<div class="sc" style="margin-top:8px"><table id="tx"></table></div>
+</div>
+<div class="card">
+<h2>④ 未来存款计算器</h2>
+<div class="row">
+<div><label>几年后</label><input id="cy" type="number" min="1" max="50" value="5"></div>
+<div><label>年利率 (%)，0 = 没有利息</label><input id="cr" type="number" step="0.5" value="4"></div>
+<div><label>加薪</label><select id="cs"><option value="1">按上面的加薪计算</option><option value="0">不加薪</option></select></div>
+</div>
+<p class="mut">用“目前存款”作起点，每月存“月薪 − 娱乐 − 其他支出”，利息按月复利，每月月底存入。</p>
+<div class="grid" id="csum"></div>
+<div class="sc" style="margin-top:10px"><table id="ctab"></table></div>
+</div>
+<div class="card">
+<h2>⑤ 历年记录（每年自动归档，数据不会消失）</h2>
+<div class="sc"><table id="hist"></table></div>
+</div>
+<div class="card">
+<h2>⑥ 备份和恢复（免费，不用账号）</h2>
+<p class="mut">点“生成备份”，把文字复制保存到手机备忘录或私人云盘。换设备、换浏览器或数据丢了，把备份文字贴回来点“恢复”就行。不要把备份放到公开的地方，里面有你的财务数据。</p>
+<textarea id="bk" rows="5" style="width:100%;padding:8px;border:1px solid var(--bd);border-radius:8px;background:var(--in);color:var(--tx);font:12px monospace" placeholder="备份文字显示在这里；恢复时把备份文字贴在这里"></textarea>
+<div class="row" style="margin-top:8px"><div style="flex:0"><button id="bkmk">生成备份</button></div><div style="flex:0"><button id="bkcp" class="g">复制</button></div><div style="flex:0"><button id="bkrs">恢复</button></div></div>
+<p class="mut" id="bkmsg"></p>
+</div>
+<div id="mod" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:50;align-items:center;justify-content:center"><div class="card" style="max-width:340px;margin:16px"><div id="mt"></div><div class="row" style="margin-top:12px"><div><button id="mn" class="g" style="width:100%">取消</button></div><div><button id="my" style="width:100%">确认</button></div></div></div></div>
+</main>
+<script>
+(function(){
+var $=function(i){return document.getElementById(i)};
+var D={salary:0,ent:0,other:0,fixed:[],start:0,raise:0,goal:0,sd:'',wst:'08:00',wh:8,wr:2,wd:'5',ws:'',cd:28,cs:22,adj:[],subs:[],act:{}};
+var T=[];
+function load(){try{var a=localStorage.getItem('fin_set');if(a)Object.assign(D,JSON.parse(a));var b=localStorage.getItem('fin_tx');if(b)T=JSON.parse(b)||[]}catch(e){}}
+function save(){try{localStorage.setItem('fin_set',JSON.stringify(D));localStorage.setItem('fin_tx',JSON.stringify(T))}catch(e){}}
+function rp(n){return 'Rp '+Math.round(n).toLocaleString('id-ID')}
+var ids=['salary','ent','start','raise','goal'];
+function proj(){var out=[],cum=base();for(var i=0;i<24;i++){var s=D.salary*Math.pow(1+D.raise/100,Math.floor(i/12));var sv=s-D.ent-D.other;cum+=sv;out.push({m:i+1,s:s,sv:sv,cum:cum})}return out}
+var locked=false;
+function pn(s){return parseFloat(String(s).replace(/\D/g,''))||0}
+function fm(n){return n?String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,'.'):''}
+function workWin(day){var p=(D.wst||'08:00').split(':'),st=day.getTime()+((+p[0]||0)*60+(+p[1]||0))*60000,h=(D.wh>=0?D.wh:8)*3600000,r=(D.wr>=0?D.wr:2)*3600000;return[[st,st+h/2],[st+h/2+r,st+h+r]]}
+function dayOn(d){var w=d.getDay(),k=D.wd||'5';return k==='7'||(k==='6'&&w!==0)||(k==='5'&&w>=1&&w<=5)}
+function workBetween(a,b){var s=0,A=a.getTime(),B=b.getTime(),d=new Date(a.getFullYear(),a.getMonth(),a.getDate());while(d.getTime()<B){if(dayOn(d)){workWin(d).forEach(function(w){var x=Math.max(A,w[0]),y=Math.min(B,w[1]);if(y>x)s+=y-x})}d=new Date(d.getFullYear(),d.getMonth(),d.getDate()+1)}return s}
+function wstat(){var n=new Date(),d=new Date(n.getFullYear(),n.getMonth(),n.getDate());if(!dayOn(d))return'休息日（不增长）';var w=workWin(d),t=n.getTime();if((t>=w[0][0]&&t<w[0][1])||(t>=w[1][0]&&t<w[1][1]))return'工作中 💼';if(t>=w[0][1]&&t<w[1][0])return'休息中 ☕';return'非上班时间'}
+function drawHist(){var S=sdate(),now=new Date();if(!(D.salary>0)||isNaN(S)){$('hist').innerHTML='<tr><td class="mut">填写月薪和起算日后，这里会按年份自动归档。</td></tr>';return}
+var rows='';for(var y=S.getFullYear();y<=now.getFullYear();y++){var a=new Date(y,0,1),b=new Date(y+1,0,1),lo=a<S?S:a,hi=b>now?now:b,sv=accAt(hi).acc-accAt(lo).acc;rows='<tr><td>'+y+(y===now.getFullYear()?'（进行中）':'')+'</td><td>'+rp(sv)+'</td><td>'+rp(D.start+accAt(hi).acc)+'</td></tr>'+rows}
+$('hist').innerHTML='<tr><th>年份</th><th>当年已存</th><th>年末存款</th></tr>'+rows}
+function applyLock(){['salary','ent','start','raise','goal','sd','wst','wh','wr','wd','ws','cd','cs','am','ad','aadd','sn','sa','sadd','fn','fa','fadd'].forEach(function(i){$(i).disabled=locked});
+Array.prototype.forEach.call(document.querySelectorAll('#ftab button,#atab button,#stab button'),function(b){b.disabled=locked});
+$('lockbar').innerHTML=locked?'🔒 基本设置已锁定，防止误改。 <button id="unl" class="g">解锁修改（需确认 3 次）</button>':'✏️ 正在编辑。改完请点： <button id="lk">完成并锁定</button>'}
+function ask(msg,cb){$('mt').innerHTML=msg;$('mod').style.display='flex';$('my').onclick=function(){$('mod').style.display='none';cb(true)};$('mn').onclick=function(){$('mod').style.display='none';cb(false)}}
+function confirm3(){ask('<b>第 1/3 次确认</b><br>你要修改基本设置（月薪、预算、存款、起算日、工作时间、固定支出）吗？',function(a){if(!a)return;ask('<b>第 2/3 次确认</b><br>修改后，当前存款和累计存款会按新设置重新计算。确定继续？',function(b){if(!b)return;ask('<b>第 3/3 次确认</b><br>最后一次确认：真的要解锁并修改吗？',function(c){if(c){locked=false;applyLock()}})})})}
+function sdate(){return new Date((D.sd||'')+'T00:00:00')}
+function addM(d,m){var x=new Date(d.getTime());x.setMonth(x.getMonth()+m);return x}
+function accOld(now){var S=sdate();if(isNaN(S)||now<=S)return{acc:0,sal:D.salary,m:0};
+var m=(now.getFullYear()-S.getFullYear())*12+now.getMonth()-S.getMonth();if(addM(S,m)>now)m--;
+var a0=addM(S,m),a1=addM(S,m+1),tw=workBetween(a0,a1),fr=tw>0?workBetween(a0,now)/tw:0,acc=0,r=D.raise/100;
+for(var i=0;i<m;i++)acc+=D.salary*Math.pow(1+r,Math.floor(i/12))-D.ent-D.other;
+var f=Math.pow(1+r,Math.floor(m/12));acc+=fr*(D.salary*f-D.ent-D.other);
+return{acc:acc,sal:D.salary*f,m:m}}
+function cyc(d){var cs=D.cs>=1&&D.cs<=28?D.cs:22,m=d.getMonth();if(d.getDate()>=cs)m++;return new Date(d.getFullYear(),m,1)}
+function monthNet(y,m){var a=D.ws?new Date(D.ws+'T00:00:00'):null;if(a&&isNaN(a))a=null;var cd=D.cd>0?D.cd:28,cs=D.cs>=1&&D.cs<=28?D.cs:22,S=sdate(),b=cyc(a||S),ay=b.getFullYear(),am=b.getMonth();
+if(a&&(y<ay||(y===ay&&m<am)))return{pay:0,net:0,g:0};
+var idx=(y-ay)*12+(m-am),g=D.salary*Math.pow(1+D.raise/100,Math.max(0,Math.floor(idx/12))),fr=1;
+if(a&&y===ay&&m===am){var ce=new Date(y,m,cs-1);fr=Math.min(1,(Math.round((ce-a)/86400000)+1)/cd)}
+var key=y+'-'+String(m+1).padStart(2,'0'),aj=(D.adj||[]).filter(function(x){return x.m===key})[0];if(aj)fr=Math.min(1,aj.d/cd);
+var pay=g*fr,est=pay;if(D.act&&D.act[key]!==undefined&&D.act[key]!==null&&D.act[key]!=='')pay=+D.act[key];return{pay:pay,est:est,ov:pay!==est,net:pay-D.ent-D.other,g:g}}
+function accAt(now){var S=sdate();if(isNaN(S)||now<=S)return{acc:0,sal:D.salary,pend:0,nextPd:null,nextPay:0};
+var acc=0,y=S.getFullYear(),m=S.getMonth(),pd;
+for(;;){pd=new Date(y,m+1,0);if(pd>now)break;if(pd>=S)acc+=monthNet(y,m).net;m++;if(m>11){m=0;y++}}
+var mn=monthNet(y,m),cs=D.cs>=1&&D.cs<=28?D.cs:22,a=D.ws?new Date(D.ws+'T00:00:00'):null,pend=0;
+for(var k=0;k<2;k++){var yy=y,mm=m+k;if(mm>11){mm-=12;yy++}var q=monthNet(yy,mm),ms=new Date(yy,mm-1,cs),me=new Date(yy,mm,cs);
+if(a&&!isNaN(a)&&a>ms&&a<me)ms=a;
+if(now>ms&&q.pay>0){var tw=workBetween(ms,me);pend+=tw>0?q.pay*workBetween(ms,now<me?now:me)/tw:0}}
+var cn=monthNet(cyc(now).getFullYear(),cyc(now).getMonth());
+return{acc:acc,sal:cn.g||D.salary,pend:pend,nextPd:pd,nextPay:mn.pay}}
+function subT(){return (D.subs||[]).reduce(function(s,x){return s+x.a},0)}
+function drawSubs(){var t=subT();$('stab').innerHTML='<tr><th>名称</th><th>每月金额</th><th></th></tr>'+((D.subs||[]).length?D.subs.map(function(x,i){return'<tr><td>'+esc(x.n)+'</td><td>'+rp(x.a)+'</td><td><button class="g" data-i="'+i+'">删</button></td></tr>'}).join('')+'<tr><td><b>合计</b></td><td><b>'+rp(t)+'</b></td><td></td></tr>':'<tr><td colspan="3" class="mut">还没有订阅</td></tr>');$('sinfo').innerHTML=(D.ent>0&&t>D.ent)?'<span class="bad">⚠️ 订阅合计超过了娱乐预算</span>':(D.ent>0?'娱乐预算 '+rp(D.ent)+'，扣掉订阅后可自由花 '+rp(D.ent-t):'')}
+function drawAct(){var S=sdate(),now=new Date();if(!(D.salary>0)||isNaN(S)){$('acttab').innerHTML='<tr><td class="mut">填写月薪和起算日后显示。</td></tr>';return}
+var rows=[],y=S.getFullYear(),m=S.getMonth(),pd;
+for(;;){pd=new Date(y,m+1,0);if(pd>=S){var r=monthNet(y,m);if(r.pay>0||r.ov)rows.push({y:y,m:m,pd:pd,r:r,paid:pd<=now})}if(pd>now)break;m++;if(m>11){m=0;y++}}
+rows=rows.slice(-13).reverse();
+$('acttab').innerHTML='<tr><th>月份</th><th>发薪日</th><th>状态</th><th>系统预计</th><th>实际到账</th><th>存入</th></tr>'+(rows.length?rows.map(function(x){var k=x.y+'-'+String(x.m+1).padStart(2,'0'),v=D.act&&D.act[k]!==undefined?(D.act[k]===0?'0':fm(D.act[k])):'';return'<tr><td>'+k+'</td><td>'+fd(x.pd)+'</td><td>'+(x.paid?'已发':'待发')+'</td><td>'+rp(x.r.est||0)+'</td><td><input class="money" type="text" inputmode="numeric" data-k="'+k+'" value="'+v+'" placeholder="'+fm(x.r.est||0)+'" style="min-width:120px;text-align:right"></td><td>'+rp(x.r.net)+'</td></tr>'}).join(''):'<tr><td colspan="6" class="mut">还没有工资记录</td></tr>')}
+function fd(d){return d?d.getFullYear()+' 年 '+(d.getMonth()+1)+' 月 '+d.getDate()+' 日':'—'}
+function drawAdj(){$('atab').innerHTML='<tr><th>月份</th><th>当月上班天数</th><th>工资比例</th><th></th></tr>'+((D.adj||[]).length?D.adj.map(function(x,i){var c=D.cd>0?D.cd:28;return'<tr><td>'+x.m+'</td><td>'+x.d+'</td><td>'+Math.min(100,x.d/c*100).toFixed(0)+'%</td><td><button class="g" data-i="'+i+'">删</button></td></tr>'}).join(''):'<tr><td colspan="4" class="mut">没有特殊月份</td></tr>')}
+function liveCalc(){return accAt(new Date())}
+function base(){return D.start+liveCalc().acc}
+function drawLive(){var L=liveCalc(),S=sdate(),n=new Date(),j=new Date(n.getFullYear(),0,1),yr=isNaN(S)?0:L.acc-accAt(S>j?S:j).acc,st=wstat();if(!(D.salary>0)){$('live').innerHTML='';return}
+$('live').innerHTML='<div class="stat"><small>当前月薪</small><b>'+rp(L.sal)+'</b></div><div class="stat"><small>当前存款（发薪日更新）</small><b class="ok">'+rp(D.start+L.acc)+'</b></div><div class="stat"><small>今年累计已存（每年 1 月 1 日归档重置）</small><b>'+rp(yr)+'</b></div><div class="stat"><small>现在状态</small><b>'+st+'</b></div><div class="stat"><small>已赚未发（月底发放，还没到账）</small><b>'+rp(L.pend)+'</b></div><div class="stat"><small>下次发薪日</small><b>'+fd(L.nextPd)+'</b><div class="mut">预计工资 '+rp(L.nextPay)+'</div></div>'}
+function ml(m){var d=new Date();d.setDate(1);d.setMonth(d.getMonth()+m);return d.getFullYear()+' 年 '+(d.getMonth()+1)+' 月（第 '+m+' 月）'}
+var lastDay='';
+function drawCal(){var n=new Date(),y=n.getFullYear(),mo=n.getMonth(),first=new Date(y,mo,1).getDay(),dim=new Date(y,mo+1,0).getDate(),ym=y+'-'+String(mo+1).padStart(2,'0'),has={};
+T.forEach(function(t){if(t.d.indexOf(ym)===0)has[+t.d.slice(8,10)]=1});
+var h=['日','一','二','三','四','五','六'].map(function(x){return'<span class="h">'+x+'</span>'}).join('');
+for(var i=0;i<first;i++)h+='<span></span>';
+for(var d=1;d<=dim;d++)h+='<span class="'+(d===n.getDate()?'t':'')+'"'+(has[d]?' style="text-decoration:underline"':'')+'>'+d+'</span>';
+var cs=D.cs>=1&&D.cs<=28?D.cs:22,c0=n.getDate()>=cs?new Date(y,mo,cs):new Date(y,mo-1,cs),c1=new Date(c0.getFullYear(),c0.getMonth()+1,cs-1);
+$('cal').innerHTML='<div class="mut" style="margin:8px 0 4px">当前工资周期：'+fd(c0)+' 至 '+fd(c1)+'</div><div class="mut" style="margin:0 0 4px">'+y+' 年 '+(mo+1)+' 月（有记账的日期带下划线）</div><div class="cal">'+h+'</div>'}
+function tick(){var n=new Date(),w=['日','一','二','三','四','五','六'][n.getDay()];$('clock').innerHTML='<b style="font-size:18px">'+n.getFullYear()+' 年 '+(n.getMonth()+1)+' 月 '+n.getDate()+' 日 星期'+w+'</b> <span class="mut">'+n.toLocaleTimeString('zh-CN',{hour12:false})+'</span>';var k=n.toDateString();if(k!==lastDay){lastDay=k;drawCal();drawHist()}drawLive()}
+function fx(){
+if(!Array.isArray(D.fixed))D.fixed=[];
+D.other=D.fixed.reduce(function(s,f){return s+f.a},0);$('other').value=fm(D.other);
+$('ftab').innerHTML='<tr><th>名称</th><th>每月金额</th><th></th></tr>'+(D.fixed.length?D.fixed.map(function(f,i){return'<tr><td>'+esc(f.n)+'</td><td>'+rp(f.a)+'</td><td><button class="g" data-i="'+i+'">删</button></td></tr>'}).join(''):'<tr><td colspan="3" class="mut">还没有固定支出</td></tr>');
+var cs=$('cat'),v=cs.value;cs.innerHTML=['娱乐'].concat(D.fixed.map(function(f){return f.n}),['其他']).map(function(n){return'<option>'+esc(n)+'</option>'}).join('');if(v)cs.value=v;
+}
+function render(){
+fx();drawAdj();drawSubs();drawAct();drawCal();drawLive();drawHist();applyLock();
+var P=proj(),sv0=P[0].sv,rate=D.salary?sv0/D.salary*100:0;
+var left=Math.max(0,D.goal-D.start),mo=null;
+for(var i=0;i<P.length;i++){if(P[i].cum>=D.goal){mo=i+1;break}}
+if(mo===null&&sv0>0&&D.goal>D.start){mo=Math.ceil(left/sv0)+'+'}
+if(D.goal<=D.start)mo=0;
+$('sum').innerHTML=
+'<div class="stat"><small>每月可存</small><b class="'+(sv0<0?'bad':'ok')+'">'+rp(sv0)+'</b></div>'+
+'<div class="stat"><small>储蓄率</small><b>'+rate.toFixed(0)+'%</b></div>'+
+'<div class="stat"><small>12 个月后存款</small><b>'+rp(P[11].cum)+'</b></div>'+
+'<div class="stat"><small>24 个月后存款</small><b>'+rp(P[23].cum)+'</b></div>'+
+'';
+var W=600,H=160,max=Math.max.apply(null,P.map(function(p){return p.cum}).concat([D.goal,1])),pts=P.map(function(p,i){return(30+i*(W-40)/23).toFixed(1)+','+(H-10-(p.cum/max)*(H-25)).toFixed(1)}).join(' ');
+var gy=(H-10-(D.goal/max)*(H-25)).toFixed(1);
+$('chart').innerHTML='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="储蓄曲线"><line x1="30" x2="'+(W-10)+'" y1="'+gy+'" y2="'+gy+'" stroke="currentColor" stroke-dasharray="4" opacity=".35"/><text x="34" y="'+(gy-4)+'" font-size="10" fill="currentColor" opacity=".6">目标</text><polyline points="'+pts+'" fill="none" stroke="var(--ac)" stroke-width="2.5"/></svg>';
+$('proj').innerHTML='<tr><th>月</th><th>月薪</th><th>当月存</th><th>累计存款</th></tr>'+P.map(function(p){return'<tr><td>'+ml(p.m)+'</td><td>'+rp(p.s)+'</td><td>'+rp(p.sv)+'</td><td>'+rp(p.cum)+'</td></tr>'}).join('');
+if(!(D.salary>0)){$('sum').innerHTML='<p class="mut">请先在①填写月薪和支出，这里才会根据你的数据推算。</p>';$('chart').innerHTML='';$('proj').innerHTML='';$('goalbox').innerHTML=''}else{$('goalbox').innerHTML=goalHtml()}
+// 本月记账
+var now=new Date(),ym=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+var cur=T.filter(function(t){return t.d.indexOf(ym)===0});
+var sp={},ent=0,tot=0;cur.forEach(function(t){sp[t.c]=(sp[t.c]||0)+t.a});
+ent=(sp['娱乐']||0)+subT();tot=ent;
+Object.keys(sp).forEach(function(k){if(k==='娱乐')return;var f=D.fixed.filter(function(x){return x.n===k})[0];tot+=f?Math.max(0,sp[k]-f.a):sp[k]});
+$('cbars').innerHTML=(D.subs&&D.subs.length?'<div class="mut">娱乐里已含固定订阅 '+rp(subT())+'，可自由花 '+rp(D.ent-subT())+'</div>':'')+D.fixed.map(function(f){var s=sp[f.n]||0,p=f.a?Math.min(100,s/f.a*100):0;return'<div style="margin-top:6px">'+esc(f.n)+'：<b class="'+(s>f.a?'bad':'')+'">'+rp(s)+'</b> / '+rp(f.a)+'</div><div class="bar"><i style="width:'+p+'%;background:'+(s>f.a?'var(--wn)':'var(--ac)')+'"></i></div>'}).join('')+Object.keys(sp).filter(function(k){return k!=='娱乐'&&!D.fixed.some(function(f){return f.n===k})}).map(function(k){return'<div style="margin-top:6px">'+esc(k)+'：<b>'+rp(sp[k])+'</b></div>'}).join('');
+var pc=D.ent?Math.min(100,ent/D.ent*100):0;
+$('mstat').innerHTML='<div>娱乐：<b class="'+(ent>D.ent?'bad':'')+'">'+rp(ent)+'</b> / '+rp(D.ent)+' <span class="mut">（剩 '+rp(D.ent-ent)+'）</span></div><div class="bar"><i style="width:'+pc+'%;background:'+(ent>D.ent?'var(--wn)':'var(--ac)')+'"></i></div><div>本月变动支出（娱乐、其他、固定项超支）：<b>'+rp(tot)+'</b> · 预计本月存：<b class="ok">'+rp(D.salary-D.other-tot)+'</b></div>';
+$('tx').innerHTML='<tr><th>日期</th><th>类别</th><th>备注</th><th>金额</th><th></th></tr>'+(cur.length?cur.slice().reverse().map(function(t){return'<tr><td>'+t.d+'</td><td>'+t.c+'</td><td>'+esc(t.n)+'</td><td>'+rp(t.a)+'</td><td><button class="g" data-id="'+t.id+'">删</button></td></tr>'}).join(''):'<tr><td colspan="5" class="mut">本月还没有记录</td></tr>');
+calc();
+}
+function goalHtml(){
+if(!(D.goal>0))return'<p class="mut">想知道多久能存够？在①填写“存款目标”。</p>';
+var B=base(),pc=Math.min(100,B/D.goal*100),h='<div class="stat" style="margin-bottom:10px"><small>存款目标 '+rp(D.goal)+'（已有 '+rp(B)+'，'+pc.toFixed(0)+'%）</small><div class="bar"><i style="width:'+pc+'%"></i></div>';
+if(B>=D.goal)return h+'<b class="ok">🎉 已经达成目标！</b></div>';
+var cum=B,n=null;
+for(var m=0;m<600;m++){cum+=D.salary*Math.pow(1+D.raise/100,Math.floor(m/12))-D.ent-D.other;if(cum>=D.goal){n=m+1;break}}
+if(n===null)return h+'<b class="bad">按目前每月存的钱，50 年内都存不到这个目标</b></div>';
+var d=new Date();d.setMonth(d.getMonth()+n);var y=Math.floor(n/12),r=n%12;
+return h+'<b>还需 '+n+' 个月'+(y?'（约 '+y+' 年 '+r+' 个月）':'')+'，预计 '+d.getFullYear()+' 年 '+(d.getMonth()+1)+' 月达成</b><div class="mut">还差 '+rp(D.goal-B)+'，已含加薪、未含利息</div></div>'}
+function calc(){
+if(!(D.salary>0)){$('csum').innerHTML='<p class="mut">请先填写月薪和支出。</p>';$('ctab').innerHTML='';return}
+var Y=Math.max(1,Math.min(50,parseInt($('cy').value)||1)),r=(parseFloat($('cr').value)||0)/100/12,rs=$('cs').value==='1'?D.raise/100:0;
+var a=base(),b=base(),rows=[];
+for(var m=0;m<Y*12;m++){var sv=D.salary*Math.pow(1+rs,Math.floor(m/12))-D.ent-D.other;a+=sv;b=b*(1+r)+sv;if((m+1)%12===0)rows.push({y:(m+1)/12,a:a,b:b})}
+var L=rows[rows.length-1];
+$('csum').innerHTML='<div class="stat"><small>'+Y+' 年后（没有利息）</small><b>'+rp(L.a)+'</b></div><div class="stat"><small>'+Y+' 年后（有利息）</small><b class="ok">'+rp(L.b)+'</b></div><div class="stat"><small>利息收益</small><b>'+rp(L.b-L.a)+'</b></div>';
+$('ctab').innerHTML='<tr><th>年</th><th>没有利息</th><th>有利息</th><th>利息收益</th></tr>'+rows.map(function(x){return'<tr><td>第 '+x.y+' 年</td><td>'+rp(x.a)+'</td><td>'+rp(x.b)+'</td><td>'+rp(x.b-x.a)+'</td></tr>'}).join('');
+}
+function esc(s){return String(s||'').replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+load();
+['cy','cr','cs'].forEach(function(k){$(k).addEventListener('input',calc)});
+if(!D.sd){var n0=new Date();D.sd=n0.getFullYear()+'-'+String(n0.getMonth()+1).padStart(2,'0')+'-'+String(n0.getDate()).padStart(2,'0');save()}
+$('sd').value=D.sd;$('sd').addEventListener('input',function(){D.sd=$('sd').value;save();render()});
+$('wst').value=D.wst;$('wh').value=D.wh;$('wr').value=D.wr;$('wd').value=D.wd;
+$('wst').addEventListener('input',function(){D.wst=$('wst').value||'08:00';save();render()});
+$('wh').addEventListener('input',function(){D.wh=parseFloat($('wh').value)||0;save();render()});
+$('wr').addEventListener('input',function(){D.wr=parseFloat($('wr').value)||0;save();render()});
+$('wd').addEventListener('input',function(){D.wd=$('wd').value;save();render()});
+$('ws').value=D.ws;$('cd').value=D.cd;$('cs').value=D.cs;$('cs').addEventListener('input',function(){D.cs=Math.min(28,Math.max(1,parseInt($('cs').value)||22));save();render()});
+$('ws').addEventListener('input',function(){D.ws=$('ws').value;save();render()});
+$('cd').addEventListener('input',function(){D.cd=parseFloat($('cd').value)||28;save();render()});
+if(!Array.isArray(D.adj))D.adj=[];
+$('aadd').addEventListener('click',function(){if(locked)return;var m=$('am').value,d=parseFloat($('ad').value);if(!m||!(d>=0))return;D.adj=D.adj.filter(function(x){return x.m!==m});D.adj.push({m:m,d:d});D.adj.sort(function(a,b){return a.m<b.m?-1:1});$('am').value='';$('ad').value='';save();render()});
+$('atab').addEventListener('click',function(e){if(locked)return;var i=e.target.getAttribute('data-i');if(i===null)return;D.adj.splice(+i,1);save();render()});
+if(!Array.isArray(D.subs))D.subs=[];
+$('sadd').addEventListener('click',function(){if(locked)return;var n=$('sn').value.trim(),a=pn($('sa').value);if(!n||!(a>0))return;D.subs.push({n:n,a:a});$('sn').value='';$('sa').value='';save();render()});
+$('stab').addEventListener('click',function(e){if(locked)return;var i=e.target.getAttribute('data-i');if(i===null)return;D.subs.splice(+i,1);save();render()});
+document.addEventListener('input',function(e){var t=e.target;if(t.classList&&t.classList.contains('money')){var d=t.value.replace(/\D/g,'');t.value=d===''?'':(+d?fm(+d):'0')}},true);
+$('acttab').addEventListener('change',function(e){var k=e.target.getAttribute('data-k');if(!k)return;if(!D.act)D.act={};var v=e.target.value.trim();if(v==='')delete D.act[k];else D.act[k]=pn(v);save();render()});
+$('bkmk').addEventListener('click',function(){$('bk').value=JSON.stringify({v:1,D:D,T:T});$('bkmsg').textContent='已生成。请复制保存。'});
+$('bkcp').addEventListener('click',function(){var t=$('bk');t.select();var ok=false;try{ok=document.execCommand('copy')}catch(e){}$('bkmsg').textContent=ok?'已复制。':'没能自动复制，请手动全选复制。'});
+$('bkrs').addEventListener('click',function(){var o;try{o=JSON.parse($('bk').value)}catch(e){}if(!o||!o.D||!Array.isArray(o.T)){$('bkmsg').textContent='备份文字不对，没有恢复。';return}
+ask('<b>确认恢复？</b><br>这会覆盖这个浏览器里现有的全部数据。',function(a){if(!a)return;ask('<b>再确认一次</b><br>覆盖后无法撤销。真的要恢复吗？',function(b){if(!b)return;D=Object.assign({},D,o.D);T=o.T;save();
+ids.forEach(function(k){$(k).value=(k==='raise'?D[k]:fm(D[k]))||''});$('sd').value=D.sd;$('wst').value=D.wst;$('wh').value=D.wh;$('wr').value=D.wr;$('wd').value=D.wd;$('ws').value=D.ws;$('cd').value=D.cd;$('cs').value=D.cs;locked=D.salary>0;render();$('bkmsg').textContent='已恢复。'})})})});
+locked=D.salary>0;
+$('lockbar').addEventListener('click',function(e){if(e.target.id==='unl')confirm3();if(e.target.id==='lk'){locked=true;applyLock()}});
+ids.forEach(function(k){$(k).value=(k==='raise'?D[k]:fm(D[k]))||'';$(k).addEventListener('input',function(){D[k]=k==='raise'?(parseFloat($(k).value)||0):pn($(k).value);save();render()})});
+$('fadd').addEventListener('click',function(){if(locked)return;var n=$('fn').value.trim(),a=pn($('fa').value);if(!n||!(a>0)||n==='娱乐'||n==='其他')return;D.fixed.push({n:n,a:a});$('fn').value='';$('fa').value='';save();render()});
+$('ftab').addEventListener('click',function(e){if(locked)return;var i=e.target.getAttribute('data-i');if(i===null)return;D.fixed.splice(+i,1);save();render()});
+$('add').addEventListener('click',function(){var a=pn($('amt').value);if(!a||a<=0)return;var n=new Date();T.push({id:Date.now(),d:n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0'),c:$('cat').value,a:a,n:$('note').value});$('amt').value='';$('note').value='';save();render()});
+$('tx').addEventListener('click',function(e){var id=e.target.getAttribute('data-id');if(!id)return;T=T.filter(function(t){return String(t.id)!==id});save();render()});
+render();
+tick();setInterval(tick,1000);
+})();
+</script>
+</body>
+</html>
